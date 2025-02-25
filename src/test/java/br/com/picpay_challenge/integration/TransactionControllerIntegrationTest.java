@@ -10,6 +10,7 @@ import br.com.picpay_challenge.repository.RoleRepository;
 import br.com.picpay_challenge.repository.TransferRepository;
 import br.com.picpay_challenge.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,8 @@ public class TransactionControllerIntegrationTest {
 
     private User userShopkeeper;
 
+    private User userCommonZeroBalance;
+
     private static final String URL_TRANSFER = "/transfer";
     @Autowired
     private TransferRepository transferRepository;
@@ -57,13 +60,16 @@ public class TransactionControllerIntegrationTest {
         roleRepository.save(roleCommon);
         roleRepository.save(roleShopkeeper);
 
-        this.userCommon = UserFactory.createValidUser(roleCommon);
-        this.userShopkeeper = UserFactory.createValidUser(roleShopkeeper);
+        this.userCommon = UserFactory.createValidUser(roleCommon, "99999999999", "example@example.com", BigDecimal.valueOf(100));
+        this.userShopkeeper = UserFactory.createValidUser(roleShopkeeper, "88888888888", "example2@example.com", BigDecimal.valueOf(100));
+        this.userCommonZeroBalance = UserFactory.createValidUser(roleCommon, "77777777777", "example3@example.com", BigDecimal.ZERO);
         userRepository.save(userCommon);
         userRepository.save(userShopkeeper);
+        userRepository.save(userCommonZeroBalance);
     }
 
     @AfterEach
+    @Transactional
     void tearDown() {
         transferRepository.deleteAll();
         userRepository.deleteAll();
@@ -100,5 +106,21 @@ public class TransactionControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonPayload))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName(value = "Unhappy Path Test: create transaction as sender with balance zero")
+    public void givenResponseError_whenSendTransferAsZeroBalance_thenReturnStatusBadRequest() throws Exception {
+        CreateTransferRequest request = new CreateTransferRequest(new BigDecimal("90"),
+                userCommonZeroBalance.getId().toString(),
+                userShopkeeper.getId().toString());
+
+        String jsonPayload = new ObjectMapper().writeValueAsString(request);
+
+        mockMvc.perform(
+                        post(URL_TRANSFER)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonPayload))
+                .andExpect(status().isBadRequest());
     }
 }
