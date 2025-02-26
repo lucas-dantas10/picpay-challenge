@@ -79,7 +79,7 @@ public class TransactionControllerIntegrationTest {
     @Test
     @DisplayName(value = "Happy Path Test: create transaction and return status created")
     public void givenCorrectResponseTransaction_whenCreateTransaction_thenReturnStatusCreated() throws Exception {
-        CreateTransferRequest request = new CreateTransferRequest(new BigDecimal("100.50"),
+        CreateTransferRequest request = new CreateTransferRequest(new BigDecimal("90"),
                 userCommon.getId().toString(),
                 userShopkeeper.getId().toString());
 
@@ -95,7 +95,7 @@ public class TransactionControllerIntegrationTest {
     @Test
     @DisplayName(value = "Unhappy Path Test: create transaction as a shopkeeper and return status unauthorized")
     public void givenResponseError_whenSendTransferAsShopkeeper_thenReturnStatusUnauthorized() throws Exception {
-        CreateTransferRequest request = new CreateTransferRequest(new BigDecimal("100.50"),
+        CreateTransferRequest request = new CreateTransferRequest(new BigDecimal("90"),
                 userShopkeeper.getId().toString(),
                 userCommon.getId().toString());
 
@@ -113,6 +113,22 @@ public class TransactionControllerIntegrationTest {
     public void givenResponseError_whenSendTransferAsZeroBalance_thenReturnStatusBadRequest() throws Exception {
         CreateTransferRequest request = new CreateTransferRequest(new BigDecimal("90"),
                 userCommonZeroBalance.getId().toString(),
+                userShopkeeper.getId().toString());
+
+        String jsonPayload = new ObjectMapper().writeValueAsString(request);
+
+        mockMvc.perform(
+                        post(URL_TRANSFER)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonPayload))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName(value = "Unhappy Path Test: create transaction as sender with balance zero")
+    public void givenResponseError_whenSendTransferAsInsufficientBalance_thenReturnStatusBadRequest() throws Exception {
+        CreateTransferRequest request = new CreateTransferRequest(new BigDecimal("120"),
+                userCommon.getId().toString(),
                 userShopkeeper.getId().toString());
 
         String jsonPayload = new ObjectMapper().writeValueAsString(request);
