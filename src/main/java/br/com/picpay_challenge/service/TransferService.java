@@ -9,6 +9,7 @@ import br.com.picpay_challenge.exception.UnauthorizedException;
 import br.com.picpay_challenge.repository.TransferRepository;
 import br.com.picpay_challenge.repository.UserRepository;
 import br.com.picpay_challenge.service.authorize.AuthorizeClient;
+import br.com.picpay_challenge.service.notification.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class TransferService {
     private final TransferRepository transferRepository;
     private final UserRepository userRepository;
     private final AuthorizeClient authorizeClient;
+    private final NotificationService notificationService;
 
     @Transactional
     public void createTransfer(CreateTransferRequest request) throws Exception {
@@ -77,6 +79,8 @@ public class TransferService {
 
        userRepository.save(sender.get());
        userRepository.save(receiver.get());
+
+        notificationService.notifyClient();
 
         log.info("Ação: {} | Status: {}", "Criada transferência", "Sucesso");
     }
