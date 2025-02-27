@@ -72,12 +72,13 @@ gradle test
  │   │   ├── 📂 controller  # Controllers da API
  │   │   ├── 📂 service     # Regras de negócio
  │   │   ├── 📂 repository  # Camada de persistência
- │   │   ├── 📂 model       # Modelos da aplicação
+ │   │   ├── 📂 entity      # Entidades da aplicação
+ │   │   ├── 📂 enums       # Enumerates da aplicação
+ │   │   ├── 📂 exception   # Exceções personalizadas da aplicação
  │   │   ├── 📂 dto         # Data Transfer Objects
  │   │   ├── 📂 config      # Configurações da aplicação
  │   ├── 📂 resources
  │       ├── application.yml  # Configurações do Spring Boot
- │       ├── db/migration      # Scripts de migração do Flyway
  ├── 📂 test
  │   ├── 📂 java/com/seuusuario/picpaychallenge
  │   │   ├── 📂 controller  # Testes de controllers
