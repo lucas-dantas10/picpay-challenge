@@ -6,6 +6,7 @@ import br.com.picpay_challenge.enums.RoleEnum;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,6 +29,7 @@ public class UserEntityTest {
                 .roles(roles)
                 .fullname(fullname)
                 .cpf(cpf)
+                .balance(BigDecimal.valueOf(100))
                 .email(email)
                 .password(password)
                 .build();
