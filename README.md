@@ -49,7 +49,11 @@ O desafio consiste na implementação de uma API para realizar transferências e
    ```sh
    gradle bootRun
    ```
-5. A API estará disponível em: `http://localhost:8080`
+5. API estará disponível em: `http://localhost:8080`
+6. Caso queira analisar o código:
+   ```sh
+   docker run -it --rm -v C:/meu-projeto:/src rawdee/pmd -d ./src -f text -R rulesets/java/quickstart.xml
+   ```
 
 ### 🧪 Executando Testes
 

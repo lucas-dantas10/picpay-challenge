@@ -2,7 +2,6 @@ package br.com.picpay_challenge.service.notification;
 
 import br.com.picpay_challenge.dto.ErrorResponse;
 import br.com.picpay_challenge.service.notify.NotifyClient;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
