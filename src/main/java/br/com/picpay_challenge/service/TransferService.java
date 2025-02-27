@@ -35,50 +35,45 @@ public class TransferService {
     public void createTransfer(CreateTransferRequest request) throws Exception {
         log.info("Ação: {} | Status: {}", "Criando transferência", "Começo");
 
-        Optional<User> sender = Optional
-                .ofNullable(userRepository.findById(UUID.fromString(request.payer()))
-                .orElseThrow(NotFoundException::new));
+        User sender = userRepository.findById(UUID.fromString(request.payer())).orElseThrow(NotFoundException::new);
+        User receiver = userRepository.findById(UUID.fromString(request.payee())).orElseThrow(NotFoundException::new);
 
-        Optional<User> receiver = Optional
-                .ofNullable(userRepository.findById(UUID.fromString(request.payee()))
-                        .orElseThrow(NotFoundException::new));
+        boolean isShopkeeper = sender
+                .getRoles()
+                .stream()
+                .anyMatch(role -> role.getName().name().equals(RoleEnum.SHOPKEEPER.name()));
 
-       boolean isShopkeeper = sender.get()
-               .getRoles()
-               .stream()
-               .anyMatch(role -> role.getName().name().equals(RoleEnum.SHOPKEEPER.name()));
+        if (isShopkeeper) {
+            log.error("Erro de autorização negada");
+            throw new UnauthorizedException("Unauthorized");
+        }
 
-       if (isShopkeeper) {
-           log.error("Erro de autorização negada");
-           throw new UnauthorizedException("Unauthorized");
-       }
+        if (sender.getBalance().compareTo(BigDecimal.ZERO) == 0
+                || sender.getBalance().compareTo(request.value()) < 0) {
+            log.error("Erro de saldo insuficiente");
+            throw new InsufficientBalanceException("Insufficient balance");
+        }
 
-       if (sender.get().getBalance().compareTo(BigDecimal.ZERO) == 0
-                || sender.get().getBalance().compareTo(request.value()) < 0) {
-           log.error("Erro de saldo insuficiente");
-           throw new InsufficientBalanceException("Insufficient balance");
-       }
+        if (!authorizeClient.getAuthorize().data().authorization()) {
+            log.error("Erro no autorizador externo");
+            throw new Exception("Not Authorized");
+        }
 
-       if (!authorizeClient.getAuthorize().data().authorization()) {
-           log.error("Erro no autorizador externo");
-           throw new Exception("Not Authorized");
-       }
+        BigDecimal senderNewBalance = sender.getBalance().subtract(request.value());
+        BigDecimal receiverNewBalannce = receiver.getBalance().add(request.value());
 
-       BigDecimal senderNewBalance = sender.get().getBalance().subtract(request.value());
-       BigDecimal receiverNewBalannce = receiver.get().getBalance().add(request.value());
-
-       sender.get().setBalance(senderNewBalance);
-       receiver.get().setBalance(receiverNewBalannce);
+        sender.setBalance(senderNewBalance);
+        receiver.setBalance(receiverNewBalannce);
 
         transferRepository.save(Transfer.builder()
-                        .sender(sender.get())
-                        .receiver(receiver.get())
-                        .transferDate(LocalDateTime.now())
-                        .amount(request.value())
-                        .build());
+                .sender(sender)
+                .receiver(receiver)
+                .transferDate(LocalDateTime.now())
+                .amount(request.value())
+                .build());
 
-       userRepository.save(sender.get());
-       userRepository.save(receiver.get());
+        userRepository.save(sender);
+        userRepository.save(receiver);
 
         notificationService.notifyClient();
 
