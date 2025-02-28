@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: deve
+    active: dev
   application:
     name:
       picpay_challenge

@@ -1,6 +1,8 @@
 package br.com.picpay_challenge.integration;
 
+import br.com.picpay_challenge.dto.AuthorizeDTO;
 import br.com.picpay_challenge.dto.CreateTransferRequest;
+import br.com.picpay_challenge.dto.DataDTO;
 import br.com.picpay_challenge.entity.Role;
 import br.com.picpay_challenge.entity.User;
 import br.com.picpay_challenge.enums.RoleEnum;
@@ -9,15 +11,22 @@ import br.com.picpay_challenge.factory.UserFactory;
 import br.com.picpay_challenge.repository.RoleRepository;
 import br.com.picpay_challenge.repository.TransferRepository;
 import br.com.picpay_challenge.repository.UserRepository;
+import br.com.picpay_challenge.service.authorize.AuthorizeClient;
+import br.com.picpay_challenge.service.notify.NotifyClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,11 +35,9 @@ import java.math.BigDecimal;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
-@TestPropertySource(
-        locations = "classpath:application-test.yaml")
+@TestPropertySource(locations = "classpath:application-test.yaml")
 @ExtendWith(SpringExtension.class)
 public class TransactionControllerIntegrationTest {
 
@@ -43,6 +50,15 @@ public class TransactionControllerIntegrationTest {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private TransferRepository transferRepository;
+
+    @MockitoBean
+    private AuthorizeClient authorizeClient;
+
+    @MockitoBean
+    private NotifyClient notifyClient;
+
     private User userCommon;
 
     private User userShopkeeper;
@@ -50,8 +66,6 @@ public class TransactionControllerIntegrationTest {
     private User userCommonZeroBalance;
 
     private static final String URL_TRANSFER = "/transfer";
-    @Autowired
-    private TransferRepository transferRepository;
 
     @BeforeEach
     void setUp() {
@@ -66,6 +80,12 @@ public class TransactionControllerIntegrationTest {
         userRepository.save(userCommon);
         userRepository.save(userShopkeeper);
         userRepository.save(userCommonZeroBalance);
+
+        DataDTO dataDTO = DataDTO.builder().authorization(true).build();
+        AuthorizeDTO authorizeDTO = AuthorizeDTO.builder().data(dataDTO).status("SUCCESS").build();
+
+        when(authorizeClient.getAuthorize()).thenReturn(authorizeDTO);
+        when(notifyClient.notifyClient()).thenReturn(ResponseEntity.noContent().build());
     }
 
     @AfterEach
